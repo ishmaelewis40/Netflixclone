@@ -17,3 +17,6 @@
     font-weight: 600;
     cursor: pointer;
 }
+.plans_plan_plan--disabled > button {
+    background-color: gray !important;
+}

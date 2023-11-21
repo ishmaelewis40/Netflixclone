@@ -8,6 +8,25 @@ import { selectUser } from '../features/userSlice';
 function Plans() {
     const [products, setProducts] = useState([]);
     const user = useSelector(selectUser);
+    const [subscription, setSubscription] = useState(null)
+
+    useEffect(() => {
+        db.collection('customers')
+        .doc(user.uid)
+        .collection('subscriptions')
+        .get()
+        .then(querySnapshot => {
+            querySnapshot.forEach(async subscription => {
+                setSubscription({
+                    role: subscription.data().role,
+                    current_period_end: subscription.data().current_period_end.seconds,
+                    current_period_start: subscription.data().current_period_start.seconds,
+
+                });
+            });
+        });
+
+    }, [user.uid]);
 
 
 
@@ -31,6 +50,7 @@ useEffect(() => {
 }, []);
 
 console.log(products)
+console.log(subscription)
 const loadCheckout = async(priceId) => {
     const docRef = await db.collection('customers').doc(user.uid).collection("checkout_sessions")
     .add({
@@ -44,7 +64,9 @@ const loadCheckout = async(priceId) => {
             alert(`An error occured: ${error.message} `)
         }
         if (sessionId) {
-            const stripe = await loadStripe()
+            const stripe = 
+            await loadStripe('pk_test_51OEfDAEac83PvAORWf1TLScPqZGSNTqUmtOtQT69A4uWwHWaUlaRAifmsHbfXIZKofuEIyafkTPFDwu8qRMgSfo100nSpAxcPl');
+            stripe.redirectToCheckout({ sessionId });
         }
     })
 
@@ -52,15 +74,28 @@ const loadCheckout = async(priceId) => {
 }
   return (
     <div className='plans'>
+        {subscription &&  <p>Renewal date:{new Date(subscription?.
+            current_period_end * 1000).toLocaleDateString('en-UK', {
+                day: 'numeric',
+                month: 'numeric',
+                year: 'numeric',
+              })}</p> }
+       
         {Object.entries(products).map(([productId, productData]) => {
+            const isCurrentPackage = productData.name?.toLowerCase().includes(subscription?.role);
+
             return(
-                <div className='plans_plan'>
+                <div 
+                 key={productId} className={` ${isCurrentPackage && "plans_plan--disabled"} plans_plan`}>
                     <div className='plans_info'>
                        <h5>{productData.name}</h5>
                        <h6>{productData.description}</h6>
                     </div>
-                    <button onClick={() => loadCheckout(productData.prices.priceId)}>
-                        Subscribe
+                    <button onClick={() => !isCurrentPackage && loadCheckout(productData.prices.priceId)
+                    }
+                    >
+                    {isCurrentPackage ? 'Current Package' : 'Subscribe'}
+                       
                     </button>
                 </div>
             )
