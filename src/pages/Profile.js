@@ -22,7 +22,7 @@ function Profile() {
                 <div className='profile_plans'>
                     <h3>Plans </h3>
                     <Plans />
-                    <div>basic</div>
+                   
                     <button  onClick={() => {auth.signOut()}} className='profile_signout'>Sign Out</button>
                     
                     
